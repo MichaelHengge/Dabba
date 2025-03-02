@@ -121,9 +121,8 @@
             "description": "Food category the ingredient belongs to."
         },
         "is_staple": {
-            "type": "integer",
-            "enum": [0, 1],
-            "description": "Indicates if this is a staple ingredient (1) or not (0)."
+            "type": "boolean",
+            "description": "Indicates if this is a staple ingredient (true) or not (false)."
         },
         "allergenes": {
             "type": "array",
