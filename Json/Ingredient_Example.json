@@ -1,0 +1,46 @@
+{
+    "id": "1234-566-48-2",
+    "name": "Cucumbers",
+    "location": {
+        "place": "Fridge",
+        "shelf": 0
+    },
+    "vegan_level": 0,
+    "diet_level": 0,
+    "size": {
+        "value": 500,
+        "unit": "g"
+    },
+    "source": "Lidl",
+    "best_before_date": "25.02.2026",
+    "nutritional_values": {
+        "energy": 50.0,
+        "fats": {
+            "total": 1.0,
+            "saturated": 0.2
+        },
+        "carbohydrates": {
+            "total": 10.0,
+            "sugar": 5.0
+        },
+        "proteins": 2.0,
+        "fiber": 2.0,
+        "salt": 0.01
+    },
+    "storage_conditions": [
+        "Cool",
+        "Dark"
+    ],
+    "category": "Vegetable",
+    "is_staple": 1,
+    "allergenes": [
+        "Peanuts",
+        "Mustard"
+    ],
+    "personal_distaste": [
+        "Ishita"
+    ],
+    "synonyms": [
+        "Better Zuchini"
+    ]
+}

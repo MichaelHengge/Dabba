@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "A unique identifier for the ingredient."
+        },
+        "name": {
+            "type": "string",
+            "description": "Name of the ingredient."
+        },
+        "location": {
+            "type": "object",
+            "properties": {
+                "place": {
+                    "type": "string",
+                    "description": "Location where the ingredient is stored."
+                },
+                "shelf": {
+                    "type": "integer",
+                    "description": "Shelf number in the storage location."
+                }
+            },
+            "required": ["place"]
+        },
+        "vegan_level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4,
+            "description": "Vegan friendliness level (0: non-vegan, 1: vegetarian, ovo-vegetarian, 2: lacto-vegetarian 3: vegan)."
+        },
+        "diet_level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Diet compatibility level (0: unrestricted, 1: restricted, 2: prohibited)."
+        },
+        "size": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number",
+                    "description": "Amount of the ingredient."
+                },
+                "unit": {
+                    "type": "string",
+                    "description": "Unit of measurement (e.g., g, ml, kg, piece)."
+                }
+            },
+            "required": ["value", "unit"]
+        },
+        "source": {
+            "type": "string",
+            "description": "Where the ingredient is from."
+        },
+        "best_before_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Expiration or best before date (DD.MM.YYYY)."
+        },
+        "nutritional_values": {
+            "type": "object",
+            "properties": {
+                "energy": {
+                    "type": "number",
+                    "description": "Energy content in kcal."
+                },
+                "fats": {
+                    "type": "object",
+                    "properties": {
+                        "total": {
+                            "type": "number",
+                            "description": "Total fat content per 100 g (g)."
+                        },
+                        "saturated": {
+                            "type": "number",
+                            "description": "Saturated fat content per 100 g (g)."
+                        }
+                    },
+                    "required": ["total", "saturated"]
+                },
+                "carbohydrates": {
+                    "type": "object",
+                    "properties": {
+                        "total": {
+                            "type": "number",
+                            "description": "Total carbohydrate content per 100 g (g)."
+                        },
+                        "sugar": {
+                            "type": "number",
+                            "description": "Sugar content per 100 g (g)."
+                        }
+                    },
+                    "required": ["total", "sugar"]
+                },
+                "proteins": {
+                    "type": "number",
+                    "description": "Protein content per 100 g (g)."
+                },
+                "fiber": {
+                    "type": "number",
+                    "description": "Fiber content per 100 g (g)."
+                },
+                "salt": {
+                    "type": "number",
+                    "description": "Salt content per 100 g (g)."
+                }
+            },
+            "required": ["energy", "fats", "carbohydrates", "proteins", "fiber", "salt"]
+        },
+        "storage_conditions": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Storage recommendations for the ingredient."
+        },
+        "category": {
+            "type": "string",
+            "description": "Food category the ingredient belongs to."
+        },
+        "is_staple": {
+            "type": "integer",
+            "enum": [0, 1],
+            "description": "Indicates if this is a staple ingredient (1) or not (0)."
+        },
+        "allergenes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of allergens contained in the ingredient."
+        },
+        "personal_distaste": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "People who dislike this ingredient."
+        },
+        "synonyms": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Alternative names for the ingredient."
+        }
+    },
+    "required": ["id", "name", "location", "category", "allergenes"]
+}
