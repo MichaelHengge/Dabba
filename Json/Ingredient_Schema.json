@@ -138,6 +138,10 @@
             },
             "description": "People who dislike this ingredient."
         },
+        "price": {
+                    "type": "number",
+                    "description": "Price of the item in €."
+        },
         "synonyms": {
             "type": "array",
             "items": {

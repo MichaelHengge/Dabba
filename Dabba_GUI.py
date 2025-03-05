@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import re
 import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
@@ -8,6 +9,7 @@ from tkinter import messagebox, simpledialog
 from ttkbootstrap.widgets import DateEntry, Checkbutton, Menubutton
 import jsonschema
 import hashlib
+import requests
 
 date_entry_available = True
 
@@ -61,9 +63,15 @@ def get_unique_dropdown_options(db, key):
     return sorted(list(values))
 
 def generate_id(name, place, shelf):
-        """Generate a unique ID based on name and location (place + shelf)."""
-        data = f"{name.lower()}_{place.lower()}_{shelf}"
-        return hashlib.sha1(data.encode()).hexdigest()[:10]
+    """Generate a unique ID based on name and location, ensuring at least one letter."""
+    data = f"{name.lower()}_{place.lower()}_{shelf}"
+    hashed = hashlib.sha1(data.encode()).hexdigest()[:10]  # First 10 characters
+
+    # Ensure at least one alphabet character
+    if not re.search(r"[a-zA-Z]", hashed):  
+        hashed = hashed[:-1] + 'a'  # Replace last char with 'a' to ensure a letter
+
+    return hashed
 
 class IngredientApp:
     def __init__(self, root):
@@ -106,31 +114,37 @@ class IngredientApp:
         self.id_entry = ttk.Entry(basic_frame, state=READONLY)
         self.id_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        ttk.Label(basic_frame, text="Name:").grid(row=1, column=0, sticky=W, padx=5, pady=5)
-        self.name_entry = ttk.Entry(basic_frame)
-        self.name_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(basic_frame, text="GTIN:").grid(row=1, column=0, sticky=W, padx=5, pady=5)
+        self.gtin_entry = ttk.Entry(basic_frame)
+        self.gtin_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.gtin_button = ttk.Button(basic_frame, text="🔍", bootstyle="OUTLINE", command=self.fetch_gtin_data)
+        self.gtin_button.grid(row=1, column=2, padx=5, pady=5)
 
-        ttk.Label(basic_frame, text="Category:").grid(row=2, column=0, sticky=W, padx=5, pady=5)
+        ttk.Label(basic_frame, text="Name:").grid(row=2, column=0, sticky=W, padx=5, pady=5)
+        self.name_entry = ttk.Entry(basic_frame)
+        self.name_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        ttk.Label(basic_frame, text="Category:").grid(row=3, column=0, sticky=W, padx=5, pady=5)
         self.category_var = tk.StringVar()
         self.category_combo = ttk.Combobox(basic_frame, textvariable=self.category_var, state=READONLY)
         self.update_dropdown(self.category_combo, get_unique_dropdown_options(self.ingredients, "category"))
-        self.category_combo.grid(row=2, column=1, padx=5, pady=5)
+        self.category_combo.grid(row=3, column=1, padx=5, pady=5)
         self.category_add_btn = ttk.Button(basic_frame, text="+", width=2, bootstyle=(INFO, OUTLINE),
                                            command=lambda: self.add_new_option(self.category_combo))
-        self.category_add_btn.grid(row=2, column=2, padx=5, pady=5, sticky=W)
+        self.category_add_btn.grid(row=3, column=2, padx=5, pady=5, sticky=W)
 
-        ttk.Label(basic_frame, text="Source:").grid(row=3, column=0, sticky=W, padx=5, pady=5)
+        ttk.Label(basic_frame, text="Source:").grid(row=4, column=0, sticky=W, padx=5, pady=5)
         self.source_var = tk.StringVar()
         self.source_combo = ttk.Combobox(basic_frame, textvariable=self.source_var, state=READONLY)
         self.update_dropdown(self.source_combo, get_unique_dropdown_options(self.ingredients, "source"))
-        self.source_combo.grid(row=3, column=1, padx=5, pady=5)
+        self.source_combo.grid(row=4, column=1, padx=5, pady=5)
         self.source_add_btn = ttk.Button(basic_frame, text="+", width=2, bootstyle=(INFO, OUTLINE),
                                          command=lambda: self.add_new_option(self.source_combo))
-        self.source_add_btn.grid(row=3, column=2, padx=5, pady=5, sticky=W)
+        self.source_add_btn.grid(row=4, column=2, padx=5, pady=5, sticky=W)
 
-        ttk.Label(basic_frame, text="Synonyms (csv):").grid(row=4, column=0, sticky=W, padx=5, pady=5)
+        ttk.Label(basic_frame, text="Synonyms (csv):").grid(row=5, column=0, sticky=W, padx=5, pady=5)
         self.synonyms_entry = ttk.Entry(basic_frame)
-        self.synonyms_entry.grid(row=4, column=1, padx=5, pady=5)
+        self.synonyms_entry.grid(row=5, column=1, padx=5, pady=5)
 
         # -------------------- Location Group --------------------
         location_frame = ttk.Labelframe(left_frame, text="Location", padding=10)
@@ -160,6 +174,11 @@ class IngredientApp:
         ttk.Label(additional_frame, text="Personal Distaste (csv):").grid(row=2, column=0, sticky=W, padx=5, pady=5)
         self.distaste_entry = ttk.Entry(additional_frame)
         self.distaste_entry.grid(row=2, column=1, padx=5, pady=5)
+        ttk.Label(additional_frame, text="Price (€):").grid(row=3, column=0, sticky=W, padx=5, pady=5)
+        self.price_spin = ttk.Spinbox(additional_frame, from_=0, to=1000, increment=0.01)
+        self.price_spin.set(0)
+        self.price_spin.grid(row=3, column=1, padx=5, pady=5)
+        
 
         # -------------------- Diet & Size Group --------------------
         diet_frame = ttk.Labelframe(right_frame, text="Diet & Size", padding=10)
@@ -202,16 +221,16 @@ class IngredientApp:
         # -------------------- Nutritional Values Group --------------------
         nutrition_frame = ttk.Labelframe(right_frame, text="Nutritional Values", padding=10)
         nutrition_frame.grid(row=1, column=0, sticky="NSEW", padx=5, pady=5)
-        ttk.Label(nutrition_frame, text="Energy (kcal):").grid(row=0, column=0, sticky=W, padx=5, pady=5)
+        ttk.Label(nutrition_frame, text="Energy (/100g):").grid(row=0, column=0, sticky=W, padx=5, pady=5)
         self.energy_spin = ttk.Spinbox(nutrition_frame, from_=0, to=10000, increment=0.1)
         self.energy_spin.grid(row=0, column=1, padx=5, pady=5)
         self.energy_spin.set(0)
         self.energy_unit_var = tk.StringVar()
         # Pre-fill with defined units and select the first entry
-        energy_predefined_units = ["kJ", "kcal"]
+        self.energy_predefined_units = ["kJ", "kcal"]
         self.energy_unit_combo = ttk.Combobox(nutrition_frame, textvariable=self.energy_unit_var, width=8, state=READONLY)
-        self.energy_unit_combo['values'] = energy_predefined_units
-        self.energy_unit_combo.set(energy_predefined_units[0])
+        self.energy_unit_combo['values'] = self.energy_predefined_units
+        self.energy_unit_combo.set(self.energy_predefined_units[0])
         self.energy_unit_combo.grid(row=0, column=2, padx=5, pady=5)
 
         # Fats subgroup
@@ -263,13 +282,92 @@ class IngredientApp:
         self.shelf_spin.bind("<Return>", lambda event: self.update_id())  # Update when Enter is pressed
         self.shelf_spin.bind("<<Increment>>", lambda event: self.update_id())  # Update when spinbox value increases
         self.shelf_spin.bind("<<Decrement>>", lambda event: self.update_id())  # Update when spinbox value decreases
+        self.gtin_entry.bind("<Return>", lambda event: self.fetch_gtin_data())
+
+        self.gtin_entry.focus()
+
+    def fetch_gtin_data(self):
+        """Fetch and autofill ingredient details from GTIN."""
+        gtin = self.gtin_entry.get().strip()
+        if gtin:
+            data = self.lookup_gtin(gtin)  # Calls the API lookup function
+            if data:
+                self.name_entry.delete(0, tk.END)
+                self.name_entry.insert(0, data["name"])
+
+                self.size_value_spin.delete(0, tk.END)
+                self.size_value_spin.insert(0, data["size"])  # Fill in the size
+
+                if not data["synonyms"] == "Unknown":
+                    self.synonyms_entry.delete(0, tk.END)
+                    self.synonyms_entry.insert(0, data["synonyms"])  # Fill in synonyms
+
+                self.allergenes_entry.delete(0, tk.END)
+                cleaned_allergens = [a.split(":")[-1] for a in data["allergenes"]]  # Remove country code
+                self.allergenes_entry.insert(0, ", ".join(cleaned_allergens))  # Display cleaned list
+
+
+                # Nutritional values
+                if "nutritional_values" in data:
+                    nutriments = data["nutritional_values"]
+                    self.energy_spin.delete(0, tk.END)
+                    self.energy_spin.insert(0, nutriments.get("energy-kcal_100g", 0))  # Energy
+                    self.energy_unit_combo.set(self.energy_predefined_units[0])
+
+                    self.fat_total_spin.delete(0, tk.END)
+                    self.fat_total_spin.insert(0, nutriments.get("fat_100g", 0))  # Total fat
+
+                    self.fat_sat_spin.delete(0, tk.END)
+                    self.fat_sat_spin.insert(0, nutriments.get("saturated-fat_100g", 0))  # Saturated fat
+
+                    self.carb_total_spin.delete(0, tk.END)
+                    self.carb_total_spin.insert(0, nutriments.get("carbohydrates_100g", 0))  # Carbs
+
+                    self.sugar_spin.delete(0, tk.END)
+                    self.sugar_spin.insert(0, nutriments.get("sugars_100g", 0))  # Sugar
+
+                    self.proteins_spin.delete(0, tk.END)
+                    self.proteins_spin.insert(0, nutriments.get("proteins_100g", 0))  # Protein
+
+                    self.fiber_spin.delete(0, tk.END)
+                    self.fiber_spin.insert(0, nutriments.get("fiber_100g", 0))  # Fiber
+
+                    self.salt_spin.delete(0, tk.END)
+                    self.salt_spin.insert(0, nutriments.get("salt_100g", 0))  # Salt
+
+                messagebox.showinfo("GTIN Lookup", f"Product: {data['name']}\nBrand: {data['brand']}")
+            else:
+                messagebox.showwarning("GTIN Lookup", "No data found for this GTIN.")
 
 
 
-        self.name_entry.focus()
+    def lookup_gtin(self, gtin):
+        """Fetch product details using GTIN from Open Food Facts."""
+        url = f"https://world.openfoodfacts.org/api/v2/product/{gtin}.json"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if "product" in data:
+                product = data["product"]
+                return {
+                    "name": product.get("product_name", "Unknown"),
+                    "brand": product.get("brands", "Unknown"),
+                    "size": product.get("quantity", "Unknown"),  # Size of the product
+                    "synonyms": product.get("generic_name", "Unknown"),  # Alternative names
+                    "allergenes": product.get("allergens_tags", []),  # List of allergens
+                    "nutritional_values": product.get("nutriments", {})  # Nutritional information
+                }
+        return None  # Return None if GTIN not found
+
 
     def update_id(self):
         """Update the ID field dynamically based on name and location."""
+
+        # Only update if GTIN not present
+        if not self.gtin_entry.get() == "":
+            return
+
         name = self.name_entry.get().strip()
         place = self.place_entry.get().strip()
         shelf = self.shelf_spin.get().strip()  # Spinbox values are strings
@@ -304,7 +402,10 @@ class IngredientApp:
     def submit_entry(self):
         """Gather data from the form, validate it against the schema, and save if valid."""
         entry = {}
-        entry["id"] = self.id_entry.get().strip()
+        if self.gtin_entry == "":
+            entry["id"] = self.id_entry.get().strip()
+        else:
+            entry["id"] = self.gtin.get().strip()
         entry["name"] = self.name_entry.get().strip()
         entry["location"] = {
             "place": self.place_entry.get().strip(),
@@ -346,6 +447,7 @@ class IngredientApp:
         entry["allergenes"] = [s.strip() for s in self.allergenes_entry.get().split(",") if s.strip()]
         entry["personal_distaste"] = [s.strip() for s in self.distaste_entry.get().split(",") if s.strip()]
         entry["synonyms"] = [s.strip() for s in self.synonyms_entry.get().split(",") if s.strip()]
+        entry["price"] = self.price_spin.get()
 
         try:
             jsonschema.validate(instance=entry, schema=self.schema)
@@ -364,6 +466,7 @@ class IngredientApp:
     def clear_form(self):
         """Reset all form fields."""
         self.id_entry.delete(0, tk.END)
+        self.gtin_entry.delete(0, tk.END)
         self.name_entry.delete(0, tk.END)
         self.place_entry.delete(0, tk.END)
         self.shelf_spin.delete(0, tk.END)
@@ -397,6 +500,8 @@ class IngredientApp:
         self.storage_entry.delete(0, tk.END)
         self.allergenes_entry.delete(0, tk.END)
         self.distaste_entry.delete(0, tk.END)
+        self.price_spin.delete(0, tk.END)
+        self.price_spin.insert(0, "0")
         self.synonyms_entry.delete(0, tk.END)
 
 def create_gui():
