@@ -1,2 +1,4 @@
 jsonschema
 ttkbootstrap
+requests
+Pillow

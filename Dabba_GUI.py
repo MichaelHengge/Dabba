@@ -10,6 +10,8 @@ from ttkbootstrap.widgets import DateEntry, Checkbutton, Menubutton
 import jsonschema
 import hashlib
 import requests
+from PIL import Image, ImageTk
+import io
 
 date_entry_available = True
 
@@ -110,6 +112,7 @@ class IngredientApp:
         # -------------------- Basic Info Group --------------------
         basic_frame = ttk.Labelframe(left_frame, text="Basic Info", padding=10)
         basic_frame.grid(row=0, column=0, sticky="NSEW", padx=5, pady=5)
+        basic_frame.columnconfigure(3, weight=1)
         ttk.Label(basic_frame, text="ID:").grid(row=0, column=0, sticky=W, padx=5, pady=5)
         self.id_entry = ttk.Entry(basic_frame, state=READONLY)
         self.id_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -146,6 +149,12 @@ class IngredientApp:
         self.synonyms_entry = ttk.Entry(basic_frame)
         self.synonyms_entry.grid(row=5, column=1, padx=5, pady=5)
 
+        # Product Image Label (Spans all rows, centered vertically)
+        self.image_label = ttk.Label(basic_frame, anchor="center")
+        self.image_label.grid(row=0, column=3, rowspan=6, padx=10, pady=5, sticky="NS")
+        self.image_label.grid_remove()
+
+
         # -------------------- Location Group --------------------
         location_frame = ttk.Labelframe(left_frame, text="Location", padding=10)
         location_frame.grid(row=1, column=0, sticky="NSEW", padx=5, pady=5)
@@ -178,7 +187,13 @@ class IngredientApp:
         self.price_spin = ttk.Spinbox(additional_frame, from_=0, to=1000, increment=0.01)
         self.price_spin.set(0)
         self.price_spin.grid(row=3, column=1, padx=5, pady=5)
-        
+
+        # ------------------- Comment Group --------------------------
+        comment_frame = ttk.Labelframe(left_frame, text="Comment", padding=10)
+        comment_frame.grid(row=3, column=0, sticky="NSEW", padx=5, pady=5)
+        comment_frame.columnconfigure(0, weight=1)
+        self.comment_entry = ttk.Entry(comment_frame)
+        self.comment_entry.grid(row=0, column=0, padx=5, pady=5, sticky="NSEW")
 
         # -------------------- Diet & Size Group --------------------
         diet_frame = ttk.Labelframe(right_frame, text="Diet & Size", padding=10)
@@ -286,6 +301,29 @@ class IngredientApp:
 
         self.gtin_entry.focus()
 
+    def display_image(self, url):
+        """Fetch and display product image from URL while maintaining aspect ratio."""
+        try:
+            response = requests.get(url, stream=True)
+            if response.status_code == 200:
+                image_data = Image.open(io.BytesIO(response.content))
+
+                # Define max width & height while maintaining aspect ratio
+                max_size = (180, 180)  # Max width and height
+                image_data.thumbnail(max_size, Image.Resampling.LANCZOS)  # Resize with aspect ratio
+
+                self.image = ImageTk.PhotoImage(image_data)  # Keep a reference
+
+                self.image_label.config(image=self.image)  # Show image
+                self.image_label.grid()  # Make it visible
+            else:
+                print("Image could not be loaded (HTTP error). Hiding image.")  # Debugging
+                self.image_label.grid_remove()  # Hide on error
+        except Exception as e:
+            print(f"Error loading image: {e}")  # Debugging
+            self.image_label.grid_remove()  # Hide if an error occurs
+
+
     def fetch_gtin_data(self):
         """Fetch and autofill ingredient details from GTIN."""
         gtin = self.gtin_entry.get().strip()
@@ -306,6 +344,12 @@ class IngredientApp:
                 cleaned_allergens = [a.split(":")[-1] for a in data["allergenes"]]  # Remove country code
                 self.allergenes_entry.insert(0, ", ".join(cleaned_allergens))  # Display cleaned list
 
+                image_url = data.get("image_url", None)
+                print(f"GTIN Image URL: {image_url}")
+                if image_url:
+                    self.display_image(image_url)
+                else:
+                    self.image_label.grid_remove()
 
                 # Nutritional values
                 if "nutritional_values" in data:
@@ -340,23 +384,29 @@ class IngredientApp:
                 messagebox.showwarning("GTIN Lookup", "No data found for this GTIN.")
 
 
-
     def lookup_gtin(self, gtin):
         """Fetch product details using GTIN from Open Food Facts."""
-        url = f"https://world.openfoodfacts.org/api/v2/product/{gtin}.json"
+        url = f"https://de.openfoodfacts.org/api/v0/product/{gtin}"
         response = requests.get(url)
         
         if response.status_code == 200:
             data = response.json()
             if "product" in data:
                 product = data["product"]
+
+                # Extract the best available image URL
+                image_url = product.get("image_url") or \
+                            product.get("image_front_url") or \
+                            product.get("image_small_url")
+            
                 return {
                     "name": product.get("product_name", "Unknown"),
                     "brand": product.get("brands", "Unknown"),
                     "size": product.get("quantity", "Unknown"),  # Size of the product
                     "synonyms": product.get("generic_name", "Unknown"),  # Alternative names
                     "allergenes": product.get("allergens_tags", []),  # List of allergens
-                    "nutritional_values": product.get("nutriments", {})  # Nutritional information
+                    "nutritional_values": product.get("nutriments", {}),  # Nutritional information
+                    "image_url": image_url
                 }
         return None  # Return None if GTIN not found
 

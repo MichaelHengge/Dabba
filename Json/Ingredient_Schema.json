@@ -140,7 +140,17 @@
         },
         "price": {
                     "type": "number",
+                    "minimum": 0,
                     "description": "Price of the item in €."
+        },
+        "comment": {
+            "type": "string",
+            "description": "User-provided comments or notes about the ingredient."
+        },
+        "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the product image from GTIN lookup."
         },
         "synonyms": {
             "type": "array",
