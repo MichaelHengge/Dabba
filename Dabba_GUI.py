@@ -166,10 +166,6 @@ class IngredientApp:
         self.shelf_spin = ttk.Spinbox(location_frame, from_=0, to=100, width=5)
         self.shelf_spin.grid(row=0, column=3, padx=5, pady=5)
         self.shelf_spin.set(0)
-        self.is_staple_var = tk.BooleanVar()
-        self.is_staple_check = Checkbutton(location_frame, text="Is Staple", variable=self.is_staple_var, bootstyle="round-toggle")
-        self.is_staple_check.grid(row=0, column=4, padx=5, pady=5)
-
 
         # -------------------- Additional Info Group --------------------
         additional_frame = ttk.Labelframe(left_frame, text="Additional Info", padding=10)
@@ -231,6 +227,10 @@ class IngredientApp:
         ttk.Label(diet_frame, text="Best Before Date:").grid(row=3, column=0, sticky=W, padx=5, pady=5)
         self.best_before_date = DateEntry(diet_frame, dateformat='%d.%m.%Y')
         self.best_before_date.grid(row=3, column=1, padx=5, pady=5)
+
+        self.is_staple_var = tk.BooleanVar()
+        self.is_staple_check = Checkbutton(diet_frame, text="Is Staple", variable=self.is_staple_var, bootstyle="round-toggle")
+        self.is_staple_check.grid(row=3, column=2, padx=5, pady=5)
 
 
         # -------------------- Nutritional Values Group --------------------
@@ -299,7 +299,36 @@ class IngredientApp:
         self.shelf_spin.bind("<<Decrement>>", lambda event: self.update_id())  # Update when spinbox value decreases
         self.gtin_entry.bind("<Return>", lambda event: self.fetch_gtin_data())
 
+        self.size_value_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.energy_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.fat_total_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.fat_sat_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.carb_total_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.sugar_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.proteins_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.fiber_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.salt_spin.bind("<FocusOut>", self.format_spinbox_value)
+        self.price_spin.bind("<FocusOut>", self.format_spinbox_value)
+
         self.gtin_entry.focus()
+
+        self.root.after(100, self.center_window)
+
+    def center_window(self):
+        """Center the window on the screen."""
+        self.root.update_idletasks()  # Ensure correct size calculation
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+    def test(self):
+        pass
 
     def display_image(self, url):
         """Fetch and display product image from URL while maintaining aspect ratio."""
@@ -323,6 +352,12 @@ class IngredientApp:
             print(f"Error loading image: {e}")  # Debugging
             self.image_label.grid_remove()  # Hide if an error occurs
 
+    def format_spinbox_value(self, event):
+        """Replace comma with dot in a spinbox value when focus is lost."""
+        widget = event.widget  # Get the spinbox that triggered the event
+        value = widget.get().replace(",", ".")  # Replace German decimal separator
+        widget.delete(0, tk.END)  # Clear current value
+        widget.insert(0, value)  # Insert corrected value
 
     def fetch_gtin_data(self):
         """Fetch and autofill ingredient details from GTIN."""
@@ -379,10 +414,9 @@ class IngredientApp:
                     self.salt_spin.delete(0, tk.END)
                     self.salt_spin.insert(0, nutriments.get("salt_100g", 0))  # Salt
 
-                messagebox.showinfo("GTIN Lookup", f"Product: {data['name']}\nBrand: {data['brand']}")
+                #messagebox.showinfo("GTIN Lookup", f"Product: {data['name']}\nBrand: {data['brand']}")
             else:
                 messagebox.showwarning("GTIN Lookup", "No data found for this GTIN.")
-
 
     def lookup_gtin(self, gtin):
         """Fetch product details using GTIN from Open Food Facts."""
@@ -410,7 +444,6 @@ class IngredientApp:
                 }
         return None  # Return None if GTIN not found
 
-
     def update_id(self):
         """Update the ID field dynamically based on name and location."""
 
@@ -427,7 +460,6 @@ class IngredientApp:
         self.id_entry.delete(0, tk.END)
         self.id_entry.insert(0, new_id)
         self.id_entry.config(state='readonly')
-
 
     def update_dropdown(self, combobox, items):
         """Sort the items and update the combobox options."""
@@ -470,7 +502,7 @@ class IngredientApp:
             "unit": self.unit_var.get().strip()
         }
         entry["source"] = self.source_var.get().strip()
-        entry["best_before_date"] = self.best_before_date.entry.get().strftime("%d.%m.%Y")
+        entry["best_before_date"] = self.best_before_date.entry.get()
 
         # Check if kJ or kcal and store as kJ because I'm a physicist :)
         energy = float(self.energy_spin.get())
