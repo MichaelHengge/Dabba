@@ -28,7 +28,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 4,
-            "description": "Vegan friendliness level (0: non-vegan, 1: vegetarian, 2: ovo-vegetarian, 3: lacto-vegetarian 4: vegan)."
+            "description": "Vegan friendliness level (0: non-vegan, 1: pescetarian, 2: ovo-lacto-vegetarian, 3: lacto-vegetarian 4: vegan)."
         },
         "diet_level": {
             "type": "integer",

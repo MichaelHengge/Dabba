@@ -1,1 +1,134 @@
-[]
+[
+    {
+        "id": "4027400148244",
+        "name": "Gew\u00fcrz Ketchup Curry Delikat 30%",
+        "location": {
+            "place": "Fridge Door",
+            "shelf": 2
+        },
+        "vegan_level": 4,
+        "diet_level": 0,
+        "size": {
+            "value": 800,
+            "unit": "ml"
+        },
+        "source": "Lidl",
+        "best_before_date": "06.03.2028",
+        "nutritional_values": {
+            "energy": 104.0,
+            "fats": {
+                "total": 0.3,
+                "saturated": 0.0
+            },
+            "carbohydrates": {
+                "total": 23.8,
+                "sugar": 20.9
+            },
+            "proteins": 0.8,
+            "fiber": 0.0,
+            "salt": 2.2
+        },
+        "storage_conditions": [
+            "cool",
+            "dry"
+        ],
+        "category": "Condiment",
+        "is_staple": true,
+        "allergenes": [
+            "mustard"
+        ],
+        "personal_distaste": [],
+        "synonyms": [
+            "Curryketchup"
+        ],
+        "price": 3.59,
+        "comment": "Delicious"
+    },
+    {
+        "id": "40897677",
+        "name": "Hafer Flocken Zart",
+        "location": {
+            "place": "Apothekerschrank",
+            "shelf": 3
+        },
+        "vegan_level": 4,
+        "diet_level": 0,
+        "size": {
+            "value": 500,
+            "unit": "g"
+        },
+        "source": "Edeka",
+        "best_before_date": "06.03.2027",
+        "nutritional_values": {
+            "energy": 371.0,
+            "fats": {
+                "total": 6.7,
+                "saturated": 1.1
+            },
+            "carbohydrates": {
+                "total": 59.5,
+                "sugar": 0.8
+            },
+            "proteins": 13.2,
+            "fiber": 9.7,
+            "salt": 0.0
+        },
+        "storage_conditions": [
+            "dry"
+        ],
+        "category": "Grains",
+        "is_staple": true,
+        "allergenes": [
+            "gluten"
+        ],
+        "personal_distaste": [
+            "Ishita"
+        ],
+        "synonyms": [
+            "Oats",
+            "Oatmeal"
+        ],
+        "price": 0.99,
+        "comment": "good"
+    },
+    {
+        "id": "4000140702785",
+        "name": "Dr. Pepper",
+        "location": {
+            "place": "Keller",
+            "shelf": 0
+        },
+        "vegan_level": 4,
+        "diet_level": 1,
+        "size": {
+            "value": 1.25,
+            "unit": "l"
+        },
+        "source": "Kaufland",
+        "best_before_date": "06.12.2025",
+        "nutritional_values": {
+            "energy": 27.0,
+            "fats": {
+                "total": 0.0,
+                "saturated": 0.0
+            },
+            "carbohydrates": {
+                "total": 6.8,
+                "sugar": 6.8
+            },
+            "proteins": 0.0,
+            "fiber": 0.0,
+            "salt": 0.02
+        },
+        "storage_conditions": [
+            "cool"
+        ],
+        "category": "Drink",
+        "is_staple": false,
+        "allergenes": [],
+        "personal_distaste": [],
+        "synonyms": [],
+        "price": 1.99,
+        "comment": "Better than cola"
+    }
+]

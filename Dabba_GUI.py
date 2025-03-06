@@ -60,6 +60,9 @@ def get_unique_dropdown_options(db, key):
         if key == "unit":
             if "size" in entry and "unit" in entry["size"]:
                 values.add(entry["size"]["unit"])
+        elif key == "place":  # Places are inside the "location" object
+            if "location" in entry and "place" in entry["location"]:
+                values.add(entry["location"]["place"])
         elif key in entry:
             values.add(entry[key])
     return sorted(list(values))
@@ -86,8 +89,8 @@ class IngredientApp:
         # Define vegan and diet level options (showing number and description)
         self.vegan_options = [
             "0: non-vegan",
-            "1: vegetarian",
-            "2: ovo-vegetarian",
+            "1: pescetarian",
+            "2: ovo-lacto-vegetarian",
             "3: lacto-vegetarian",
             "4: vegan"
         ]
@@ -158,13 +161,19 @@ class IngredientApp:
         # -------------------- Location Group --------------------
         location_frame = ttk.Labelframe(left_frame, text="Location", padding=10)
         location_frame.grid(row=1, column=0, sticky="NSEW", padx=5, pady=5)
-        # Place and Shelf on the same line, with Is Staple next to Shelf
-        ttk.Label(location_frame, text="Place:").grid(row=0, column=0, sticky=W, padx=5, pady=5)
-        self.place_entry = ttk.Entry(location_frame)
-        self.place_entry.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Label(location_frame, text="Shelf:").grid(row=0, column=2, sticky=W, padx=5, pady=5)
+        # Place and Shelf on the same line
+        self.place_var = tk.StringVar()
+        self.place_combo = ttk.Combobox(location_frame, textvariable=self.place_var, state="readonly")
+        self.update_dropdown(self.place_combo, get_unique_dropdown_options(self.ingredients, "place"))
+        self.place_combo.grid(row=0, column=1, padx=5, pady=5)
+
+        # Add "+" button to add new places
+        self.place_add_btn = ttk.Button(location_frame, text="+", width=2, command=lambda: self.add_new_option(self.place_combo), bootstyle=(INFO, OUTLINE))
+        self.place_add_btn.grid(row=0, column=2, padx=5, pady=5, sticky="W")
+
+        ttk.Label(location_frame, text="Shelf:").grid(row=0, column=3, sticky=W, padx=5, pady=5)
         self.shelf_spin = ttk.Spinbox(location_frame, from_=0, to=100, width=5)
-        self.shelf_spin.grid(row=0, column=3, padx=5, pady=5)
+        self.shelf_spin.grid(row=0, column=4, padx=5, pady=5)
         self.shelf_spin.set(0)
 
         # -------------------- Additional Info Group --------------------
@@ -285,14 +294,22 @@ class IngredientApp:
         self.salt_spin.grid(row=5, column=1, padx=5, pady=5)
         self.salt_spin.set(0)
 
-        # -------------------- Submit Button --------------------
-        submit_btn = ttk.Button(mainframe, text="Submit", command=self.submit_entry)
-        submit_btn.grid(row=1, column=0, columnspan=2, pady=10)
+        # ---------------------- Button Frame ----------------------
+        button_frame = ttk.Frame(mainframe)
+        button_frame.grid(row=1, column=0, columnspan=2, pady=10)
+
+        # Clear Button (Left of Submit)
+        clear_btn = ttk.Button(button_frame, text="Clear", bootstyle="danger", command=self.clear_form)
+        clear_btn.grid(row=0, column=0, padx=5)
+
+        # Submit Button
+        submit_btn = ttk.Button(button_frame, text="Submit", bootstyle="success", command=self.submit_entry)
+        submit_btn.grid(row=0, column=1, padx=5)
 
 
         # --------------------- EVENT BINDINGS ----------------------
         self.name_entry.bind("<KeyRelease>", lambda event: self.update_id())
-        self.place_entry.bind("<KeyRelease>", lambda event: self.update_id())
+        self.place_combo.bind("<KeyRelease>", lambda event: self.update_id())
         self.shelf_spin.bind("<FocusOut>", lambda event: self.update_id())  # Update when user clicks out
         self.shelf_spin.bind("<Return>", lambda event: self.update_id())  # Update when Enter is pressed
         self.shelf_spin.bind("<<Increment>>", lambda event: self.update_id())  # Update when spinbox value increases
@@ -311,21 +328,6 @@ class IngredientApp:
         self.price_spin.bind("<FocusOut>", self.format_spinbox_value)
 
         self.gtin_entry.focus()
-
-        self.root.after(100, self.center_window)
-
-    def center_window(self):
-        """Center the window on the screen."""
-        self.root.update_idletasks()  # Ensure correct size calculation
-        width = self.root.winfo_width()
-        height = self.root.winfo_height()
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        
-        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def test(self):
         pass
@@ -368,8 +370,22 @@ class IngredientApp:
                 self.name_entry.delete(0, tk.END)
                 self.name_entry.insert(0, data["name"])
 
-                self.size_value_spin.delete(0, tk.END)
-                self.size_value_spin.insert(0, data["size"])  # Fill in the size
+                # Extract numeric part (size) and unit
+                size_text = data["size"]
+                match = re.match(r"([\d,.]+)\s*([a-zA-Z]*)", size_text)  # Extract number and unit
+
+                if match:
+                    size_value, unit_value = match.groups()
+                    size_value = size_value.replace(",", ".")  # Convert comma to dot
+                    self.size_value_spin.delete(0, tk.END)
+                    self.size_value_spin.insert(0, size_value)  # Store numeric size
+
+                    # Check if unit exists in the dropdown
+                    existing_units = self.unit_combo["values"]
+                    if unit_value in existing_units:
+                        self.unit_combo.set(unit_value)  # Select the unit
+                    else:
+                        messagebox.showwarning("Unknown Unit", f"The unit '{unit_value}' is not in the list.")
 
                 if not data["synonyms"] == "Unknown":
                     self.synonyms_entry.delete(0, tk.END)
@@ -415,6 +431,7 @@ class IngredientApp:
                     self.salt_spin.insert(0, nutriments.get("salt_100g", 0))  # Salt
 
                 #messagebox.showinfo("GTIN Lookup", f"Product: {data['name']}\nBrand: {data['brand']}")
+                self.category_combo.focus()
             else:
                 messagebox.showwarning("GTIN Lookup", "No data found for this GTIN.")
 
@@ -487,10 +504,10 @@ class IngredientApp:
         if self.gtin_entry == "":
             entry["id"] = self.id_entry.get().strip()
         else:
-            entry["id"] = self.gtin.get().strip()
+            entry["id"] = self.gtin_entry.get().strip()
         entry["name"] = self.name_entry.get().strip()
         entry["location"] = {
-            "place": self.place_entry.get().strip(),
+            "place": self.place_var.get().strip(),
             "shelf": int(self.shelf_spin.get())
         }
         vegan_sel = self.vegan_var.get().split(":")
@@ -498,7 +515,7 @@ class IngredientApp:
         diet_sel = self.diet_var.get().split(":")
         entry["diet_level"] = int(diet_sel[0].strip()) if diet_sel[0].isdigit() else 0
         entry["size"] = {
-            "value": int(self.size_value_spin.get()),
+            "value": float(self.size_value_spin.get()),
             "unit": self.unit_var.get().strip()
         }
         entry["source"] = self.source_var.get().strip()
@@ -529,7 +546,8 @@ class IngredientApp:
         entry["allergenes"] = [s.strip() for s in self.allergenes_entry.get().split(",") if s.strip()]
         entry["personal_distaste"] = [s.strip() for s in self.distaste_entry.get().split(",") if s.strip()]
         entry["synonyms"] = [s.strip() for s in self.synonyms_entry.get().split(",") if s.strip()]
-        entry["price"] = self.price_spin.get()
+        entry["price"] = float(self.price_spin.get())
+        entry["comment"] = self.comment_entry.get().strip()
 
         try:
             jsonschema.validate(instance=entry, schema=self.schema)
@@ -550,19 +568,16 @@ class IngredientApp:
         self.id_entry.delete(0, tk.END)
         self.gtin_entry.delete(0, tk.END)
         self.name_entry.delete(0, tk.END)
-        self.place_entry.delete(0, tk.END)
+        self.place_combo.current(0)
         self.shelf_spin.delete(0, tk.END)
         self.shelf_spin.insert(0, "0")
         self.vegan_combo.current(0)
         self.diet_combo.current(0)
         self.size_value_spin.delete(0, tk.END)
         self.size_value_spin.insert(0, "0")
-        self.unit_combo.set("")
-        self.source_combo.set("")
-        if date_entry_available:
-            self.best_before_date.set_date(datetime.date.today())
-        else:
-            self.best_before_date.delete(0, tk.END)
+        self.unit_combo.current(0)
+        self.source_combo.current(0)
+        self.best_before_date.configure(startdate=datetime.date.today())
         self.energy_spin.delete(0, tk.END)
         self.energy_spin.insert(0, "0")
         self.fat_total_spin.delete(0, tk.END)
@@ -585,6 +600,10 @@ class IngredientApp:
         self.price_spin.delete(0, tk.END)
         self.price_spin.insert(0, "0")
         self.synonyms_entry.delete(0, tk.END)
+        self.is_staple_var = False
+        self.comment_entry.delete(0, tk.END)
+
+        self.gtin_entry.focus()
 
 def create_gui():
     """Create the main GUI window and return the root and app instance."""
