@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Ingredient</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gloock&family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f8f1e4;
+            color: #5a3e1b;
+        }
+        header {
+            background: linear-gradient(90deg, #ffb347, #ffcc33);
+            color: white;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Gloock', serif;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        form {
+            background: white;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: left;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .inline-group {
+            display: flex;
+            gap: 10px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #8c4600;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            background-color: #ffb347;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+
+<header>Add New Ingredient</header>
+
+<form id="ingredient-form">
+    
+    <div class="form-group">
+        <label>Name:</label>
+        <input type="text" id="name" required>
+    </div>
+
+    <div class="form-group inline-group">
+        <div>
+            <label>Storage Location:</label>
+            <input type="text" id="location" required>
+        </div>
+        <div>
+            <label>Shelf:</label>
+            <input type="number" id="shelf" min="0">
+        </div>
+    </div>
+
+    <div class="form-group inline-group">
+        <div>
+            <label>Category:</label>
+            <input type="text" id="category" required>
+        </div>
+        <div>
+            <label>Source:</label>
+            <input type="text" id="source">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Best Before Date:</label>
+        <input type="date" id="best_before_date">
+    </div>
+
+    <div class="form-group inline-group">
+        <div>
+            <label>Price (€):</label>
+            <input type="number" id="price" min="0" step="0.01">
+        </div>
+        <div>
+            <label>Size:</label>
+            <input type="text" id="size_value" required>
+        </div>
+        <div>
+            <label>Unit:</label>
+            <input type="text" id="size_unit" required>
+        </div>
+    </div>
+    
+    <h3>Nutritional Values</h3>
+    <div class="form-group inline-group">
+        <div>
+            <label>Energy (kcal):</label>
+            <input type="number" id="energy" min="0">
+        </div>
+        <div>
+            <label>Total Fats (g):</label>
+            <input type="number" id="fats_total" min="0">
+        </div>
+        <div>
+            <label>Saturated Fats (g):</label>
+            <input type="number" id="fats_saturated" min="0">
+        </div>
+    </div>
+    <div class="form-group inline-group">
+        <div>
+            <label>Carbohydrates (g):</label>
+            <input type="number" id="carbohydrates_total" min="0">
+        </div>
+        <div>
+            <label>Sugar (g):</label>
+            <input type="number" id="sugar" min="0">
+        </div>
+    </div>
+    <div class="form-group inline-group">
+        <div>
+            <label>Proteins (g):</label>
+            <input type="number" id="proteins" min="0">
+        </div>
+        <div>
+            <label>Fiber (g):</label>
+            <input type="number" id="fiber" min="0">
+        </div>
+        <div>
+            <label>Salt (g):</label>
+            <input type="number" id="salt" min="0">
+        </div>
+    </div>
+    
+    <h3>Additional Information</h3>
+    <div class="form-group">
+        <label>Storage Conditions:</label>
+        <input type="text" id="storage_conditions">
+    </div>
+    <div class="form-group">
+        <label>Allergens:</label>
+        <input type="text" id="allergenes">
+    </div>
+    <div class="form-group">
+        <label>Personal Distaste:</label>
+        <input type="text" id="personal_distaste">
+    </div>
+    <div class="form-group">
+        <label>Synonyms:</label>
+        <input type="text" id="synonyms">
+    </div>
+    <div class="form-group">
+        <label>Comment:</label>
+        <textarea id="comment" rows="3"></textarea>
+    </div>
+
+    <button type="button" onclick="submitIngredient()">Add Ingredient</button>
+</form>
+
+<script>
+    function submitIngredient() {
+        // Collect form data and send POST request (same as before)
+    }
+</script>
+
+</body>
+</html>

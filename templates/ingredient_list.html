@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dabba - Ingredient List</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gloock&family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f8f1e4;
+            color: #5a3e1b;
+        }
+        header {
+            background: linear-gradient(90deg, #ffb347, #ffcc33);
+            color: white;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Gloock', serif;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #ffb347;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #fff3e0;
+        }
+        .search-container {
+            margin: 20px;
+        }
+        #search-input {
+            padding: 10px;
+            width: 60%;
+            max-width: 500px;
+            border: 1px solid #8c4600;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            margin-left: 5px;
+            background-color: #ffb347;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+
+<header>Dabba - Ingredient List</header>
+
+<div class="search-container">
+    <input type="text" id="search-input" placeholder="Search by Name or Location" onkeyup="searchIngredients()">
+    <button onclick="searchIngredients()">Search</button>
+    <button onclick="clearSearch()">Clear</button>
+</div>
+
+<table id="ingredients-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Shelf</th>
+        </tr>
+    </thead>
+    <tbody id="ingredients-table-body">
+        <tr id="loading-message">
+            <td colspan="3" style="text-align: center; font-weight: bold;">Loading ingredients...</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    let fullIngredientData = [];
+    let currentPage = 1;
+    const itemsPerPage = 50;
+
+    function fetchAllIngredients() {
+        fetch("/ingredients")
+            .then(response => response.json())
+            .then(data => {
+                fullIngredientData = data;
+                searchIngredients();
+            })
+            .catch(error => {
+                console.error("Error fetching ingredients:", error);
+                alert("Failed to load ingredient data!");
+            });
+    }
+
+    function searchIngredients() {
+        const query = document.getElementById("search-input").value.trim().toLowerCase();
+        let filteredData = fullIngredientData;
+
+        if (query) {
+            filteredData = filteredData.filter(ing => 
+                ing.name.toLowerCase().includes(query) ||
+                ing.location.place.toLowerCase().includes(query)
+            );
+        }
+
+        currentPage = 1;
+        displayIngredients(filteredData, currentPage);
+    }
+
+    function clearSearch() {
+        document.getElementById("search-input").value = "";
+        displayIngredients(fullIngredientData);
+    }
+
+    function displayIngredients(data, page = 1) {
+        const tableBody = document.querySelector("#ingredients-table-body");
+        tableBody.innerHTML = "";
+
+        if (data.length === 0) {
+            tableBody.innerHTML = "<tr><td colspan='3' style='text-align: center; font-weight: bold;'>No ingredients found</td></tr>";
+            return;
+        }
+
+        data.sort((a, b) => a.name.localeCompare(b.name));
+        
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedData = data.slice(startIndex, endIndex);
+
+        paginatedData.forEach(ing => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${ing.name}</td>
+                    <td>${ing.location.place}</td>
+                    <td>${ing.location.shelf || "N/A"}</td>
+                </tr>`;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchAllIngredients);
+</script>
+
+</body>
+</html>
