@@ -26,7 +26,7 @@
         }
         form {
             background: white;
-            max-width: 600px;
+            max-width: 700px;
             margin: 20px auto;
             padding: 20px;
             border-radius: 10px;
@@ -38,17 +38,28 @@
         }
         .form-group label {
             font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
         }
         .inline-group {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+            margin-bottom: 10px;
+        }
+        .inline-group div {
+            flex: 1;
+            min-width: 150px;
+        }
+        .inline-group div label {
+            margin-left: 2px;
         }
         input, select, textarea {
             width: 100%;
             padding: 10px;
-            margin-top: 5px;
             border: 1px solid #8c4600;
             border-radius: 5px;
+            box-sizing: border-box;
         }
         button {
             padding: 10px 15px;
@@ -59,10 +70,41 @@
             font-weight: bold;
             cursor: pointer;
             border-radius: 5px;
+            width: 100%;
         }
         button:hover {
             background-color: #ff9800;
         }
+        h3 {
+            margin-top: 20px;
+        }
+        .gtin-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gtin-input {
+            flex: 1;
+        }
+
+        .gtin-button {
+            width: 50px;
+            height: 37px;
+            padding: 10px;
+            margin-top: 22px;
+            font-size: 14px;
+            border: 1px solid #8c4600;
+            background-color: #ffb347;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .gtin-button:hover {
+            background-color: #ff9800;
+        }
+
     </style>
 </head>
 <body>
@@ -72,13 +114,28 @@
 <form id="ingredient-form">
     
     <div class="form-group">
-        <label>Name:</label>
+        <label>Name*:</label>
         <input type="text" id="name" required>
     </div>
 
-    <div class="form-group inline-group">
+    <div class="inline-group">
+        <div class="gtin-container">
+            <div class="gtin-input">
+                <label>GTIN:</label>
+                <input type="text" id="gtin">
+            </div>
+            <button type="button" class="gtin-button" onclick="fetchGTINData()">🔍</button>
+        </div>
         <div>
-            <label>Storage Location:</label>
+            <label>Best Before Date:</label>
+            <input type="date" id="best_before_date">
+        </div>
+    </div>
+    
+
+    <div class="inline-group">
+        <div>
+            <label>Storage Location*:</label>
             <input type="text" id="location" required>
         </div>
         <div>
@@ -87,39 +144,61 @@
         </div>
     </div>
 
-    <div class="form-group inline-group">
+    <div class="inline-group">
         <div>
             <label>Category:</label>
-            <input type="text" id="category" required>
+            <input type="text" id="category">
         </div>
         <div>
             <label>Source:</label>
             <input type="text" id="source">
         </div>
     </div>
-    
-    <div class="form-group">
-        <label>Best Before Date:</label>
-        <input type="date" id="best_before_date">
+
+    <div class="inline-group">
+        <div>
+            <label>Vegan Level:</label>
+            <select id="vegan_level">
+                <option value="0">Non-Vegan</option>
+                <option value="1">Pescetarian</option>
+                <option value="2">Ovo-Lacto-Vegetarian</option>
+                <option value="3">Lacto-Vegetarian</option>
+                <option value="4">Vegan</option>
+            </select>
+        </div>
+        <div>
+            <label>Diet Level:</label>
+            <select id="diet_level">
+                <option value="0">Unrestricted</option>
+                <option value="1">Restricted</option>
+                <option value="2">Prohibited</option>
+            </select>
+        </div>
     </div>
 
-    <div class="form-group inline-group">
+    <div class="inline-group">
         <div>
             <label>Price (€):</label>
             <input type="number" id="price" min="0" step="0.01">
         </div>
         <div>
             <label>Size:</label>
-            <input type="text" id="size_value" required>
+            <input type="text" id="size_value">
         </div>
         <div>
             <label>Unit:</label>
-            <input type="text" id="size_unit" required>
+            <select id="size_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="ml">ml</option>
+                <option value="l">l</option>
+                <option value="piece">piece</option>
+            </select>
         </div>
     </div>
     
     <h3>Nutritional Values</h3>
-    <div class="form-group inline-group">
+    <div class="inline-group">
         <div>
             <label>Energy (kcal):</label>
             <input type="number" id="energy" min="0">
@@ -133,7 +212,7 @@
             <input type="number" id="fats_saturated" min="0">
         </div>
     </div>
-    <div class="form-group inline-group">
+    <div class="inline-group">
         <div>
             <label>Carbohydrates (g):</label>
             <input type="number" id="carbohydrates_total" min="0">
@@ -143,7 +222,7 @@
             <input type="number" id="sugar" min="0">
         </div>
     </div>
-    <div class="form-group inline-group">
+    <div class="inline-group">
         <div>
             <label>Proteins (g):</label>
             <input type="number" id="proteins" min="0">
@@ -164,7 +243,7 @@
         <input type="text" id="storage_conditions">
     </div>
     <div class="form-group">
-        <label>Allergens:</label>
+        <label>Allergens*:</label>
         <input type="text" id="allergenes">
     </div>
     <div class="form-group">

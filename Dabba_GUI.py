@@ -524,7 +524,7 @@ class IngredientApp:
         # Check if kJ or kcal and store as kJ because I'm a physicist :)
         energy = float(self.energy_spin.get())
         if self.energy_unit_combo.get() == 'kcal':
-            energy *= 4.184 
+            energy = 4.184 
         
         entry["nutritional_values"] = {
             "energy": energy,

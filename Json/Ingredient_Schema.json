@@ -160,5 +160,5 @@
             "description": "Alternative names for the ingredient."
         }
     },
-    "required": ["id", "name", "location", "category", "allergenes"]
+    "required": ["id", "name", "location"]
 }
