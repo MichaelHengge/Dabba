@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" sizes="192x192" href="{{ url_for('static', filename='favicon-192.ico') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <title>Dabba - Kitchen Ingredients</title>
+    <title>About Dabba</title>
+
+    <!-- Favicon links -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" sizes="192x192" href="favicon-192.ico">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Gloock&family=Poppins:wght@300;400;600&display=swap');
 
@@ -51,7 +54,7 @@
             margin: 20px auto;
         }
         .footer {
-            margin: 30px;
+            margin-top: 30px;
             font-size: 14px;
             color: #666;
         }
@@ -59,18 +62,23 @@
 </head>
 <body>
 
-    <header>Welcome to the Ingredient Database</header>
+    <header>About Dabba</header>
     
     <nav>
-        <a href="/ingredient-list">View Ingredients</a>
+        <a href="/">Home</a>
+        <a href="/ingredients">View Ingredients</a>
         <a href="/add">Add Ingredient</a>
         <a href="/about">About</a>
     </nav>
 
     <div class="container">
         <div class="card">
-            <h2>Manage Your Ingredients Efficiently</h2>
-            <p>Use this database to store, search, and manage ingredients efficiently.</p>
+            <h2>What is Dabba?</h2>
+            <p><strong>Dabba</strong> is inspired by the traditional <em>Masala Dabba</em>, the iconic Indian spice box that keeps essential ingredients organized and accessible in every Indian kitchen.</p>
+            
+            <p>Just like the Masala Dabba stores spices, our <strong>Dabba</strong> is a digital database designed to help you <strong>store, search, and manage</strong> all your kitchen ingredients efficiently. Whether you're tracking pantry staples, dietary restrictions, or allergens, Dabba keeps everything in one place.</p>
+
+            <p>Use Dabba to ensure your kitchen is always stocked with what you need, reducing waste and making cooking easier!</p>
         </div>
     </div>
 

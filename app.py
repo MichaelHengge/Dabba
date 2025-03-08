@@ -59,6 +59,21 @@ def ingredient_list():
 def add_page():
     return render_template("add_ingredient.html")
 
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/ingredient/details/<id>")
+def ingredient_details(id):
+    """Retrieve ingredient details and render the ingredient details page."""
+    ingredients = load_database()
+    ingredient = next((ing for ing in ingredients if ing["id"] == id), None)
+
+    if not ingredient:
+        return "Ingredient not found", 404
+
+    return render_template("ingredient_overview.html", ingredient=ingredient)
+
 @app.route("/ingredients", methods=["GET"])
 def get_all_ingredients():
     """Retrieve all ingredients."""

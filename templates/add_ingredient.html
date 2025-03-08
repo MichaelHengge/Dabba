@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" sizes="192x192" href="{{ url_for('static', filename='favicon-192.ico') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Add New Ingredient</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Gloock&family=Poppins:wght@300;400;600&display=swap');
@@ -79,30 +81,52 @@
             margin-top: 20px;
         }
         .gtin-container {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 5px;
         }
 
-        .gtin-input {
-            flex: 1;
-        }
-
         .gtin-button {
-            width: 50px;
+            width: 40px;
             height: 37px;
             padding: 10px;
             margin-top: 22px;
             font-size: 14px;
-            border: 1px solid #8c4600;
-            background-color: #ffb347;
+            border: 1px solid #ff9800;
+            background-color: #fff;
             color: white;
             border-radius: 5px;
             cursor: pointer;
+            transition: background 0.3s ease-in-out;
         }
 
         .gtin-button:hover {
             background-color: #ff9800;
+        }
+        .footer {
+            margin: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .breadcrumb {
+            font-size: 14px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .breadcrumb a {
+            text-decoration: none;
+            color: #8c4600;
+            font-weight: bold;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+            color: #ff9800;
+        }
+        .breadcrumb span {
+            font-weight: bold;
+            color: #5a3e1b;
         }
 
     </style>
@@ -110,6 +134,12 @@
 <body>
 
 <header>Add New Ingredient</header>
+<nav class="breadcrumb">
+    <a href="/">🏠 Home</a> ›
+    <a href="/ingredient-list">Ingredients</a> ›
+    <span>Add New Ingredient</span>
+</nav>
+
 
 <form id="ingredient-form">
     
@@ -122,7 +152,7 @@
         <div class="gtin-container">
             <div class="gtin-input">
                 <label>GTIN:</label>
-                <input type="text" id="gtin">
+                <input type="number" id="gtin" min="0" max="9999999999999" step="1">
             </div>
             <button type="button" class="gtin-button" onclick="fetchGTINData()">🔍</button>
         </div>
@@ -131,27 +161,35 @@
             <input type="date" id="best_before_date">
         </div>
     </div>
-    
 
     <div class="inline-group">
         <div>
             <label>Storage Location*:</label>
-            <input type="text" id="location" required>
+            <select id="location" onchange="checkNewEntry('location')">
+                <option value="">Select a location...</option>
+            </select>
+            <input type="text" id="new_location" placeholder="Enter new location" style="display: none;">
         </div>
         <div>
             <label>Shelf:</label>
-            <input type="number" id="shelf" min="0">
+            <input type="number" id="shelf" min="0" value="0">
         </div>
     </div>
 
     <div class="inline-group">
         <div>
             <label>Category:</label>
-            <input type="text" id="category">
+            <select id="category" onchange="checkNewEntry('category')">
+                <option value="">Select a category...</option>
+            </select>
+            <input type="text" id="new_category" placeholder="Enter new category" style="display: none;">
         </div>
         <div>
             <label>Source:</label>
-            <input type="text" id="source">
+            <select id="source" onchange="checkNewEntry('source')">
+                <option value="">Select a source...</option>
+            </select>
+            <input type="text" id="new_source" placeholder="Enter new source" style="display: none;">
         </div>
     </div>
 
@@ -179,11 +217,11 @@
     <div class="inline-group">
         <div>
             <label>Price (€):</label>
-            <input type="number" id="price" min="0" step="0.01">
+            <input type="number" id="price" min="0" step="0.01" value="0.00">
         </div>
         <div>
             <label>Size:</label>
-            <input type="text" id="size_value">
+            <input type="number" id="size_value" min="0" step="1" value="0">
         </div>
         <div>
             <label>Unit:</label>
@@ -243,7 +281,7 @@
         <input type="text" id="storage_conditions">
     </div>
     <div class="form-group">
-        <label>Allergens*:</label>
+        <label>Allergens:</label>
         <input type="text" id="allergenes">
     </div>
     <div class="form-group">
@@ -259,13 +297,380 @@
         <textarea id="comment" rows="3"></textarea>
     </div>
 
+    * required fields
+
     <button type="button" onclick="submitIngredient()">Add Ingredient</button>
 </form>
 
+<div class="footer">
+    &copy; 2025 Michael Hengge | Inspired by the Indian spice box.
+</div>
+
 <script>
-    function submitIngredient() {
-        // Collect form data and send POST request (same as before)
+    function generateID(name, place, shelf) {
+        // Combine name, place, and shelf into a single string
+        let data = `${name.toLowerCase()}_${place.toLowerCase()}_${shelf}`;
+
+        // Generate SHA-1 hash and take the first 10 characters
+        let hash = sha1(data).substring(0, 10);
+
+        // Ensure at least one letter in the ID
+        if (!/[a-zA-Z]/.test(hash)) {
+            hash = hash.slice(0, -1) + 'a'; // Replace last character with 'a'
+        }
+
+        return hash;
     }
+
+    function updateID() {
+        const gtin = document.getElementById("gtin").value.trim();
+        const name = document.getElementById("name").value.trim();
+        const place = document.getElementById("location").value.trim();
+        const shelf = document.getElementById("shelf").value.trim();
+
+        if (gtin !== "") {
+            return gtin; // If GTIN is provided, use it as ID
+        } else {
+            return generateID(name, place, shelf);
+        }
+    }
+
+    function fetchDropdownOptions() {
+        fetch("/ingredients")
+        .then(response => response.json())
+        .then(data => {
+            let locations = new Set();
+            let categories = new Set();
+            let sources = new Set();
+
+            // Extract unique locations, categories, and sources
+            data.forEach(ingredient => {
+                if (ingredient.location && ingredient.location.place) locations.add(ingredient.location.place);
+                if (ingredient.category) categories.add(ingredient.category);
+                if (ingredient.source) sources.add(ingredient.source);
+            });
+
+            // Populate dropdowns
+            updateDropdown("location", locations);
+            updateDropdown("category", categories);
+            updateDropdown("source", sources);
+        })
+        .catch(error => console.error("Error fetching ingredient data:", error));
+    }
+
+    function updateDropdown(elementId, values) {
+        let select = document.getElementById(elementId);
+        select.innerHTML = '<option value="">Select an option...</option>'; // Reset dropdown
+
+        values.forEach(value => {
+            let option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+
+        // Add "Add New" option back
+        let newOption = document.createElement("option");
+        newOption.value = "add_new";
+        newOption.textContent = "➕ Add New";
+        select.appendChild(newOption);
+    }
+
+    // SHA-1 Hash Function (Lightweight Implementation)
+    function sha1(str) {
+        const buffer = new TextEncoder("utf-8").encode(str);
+        return crypto.subtle.digest("SHA-1", buffer).then(hashBuffer => {
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
+        });
+    }
+
+    function fetchGTINData() {
+        const gtin = document.getElementById("gtin").value.trim();
+        if (!gtin) {
+            alert("Please enter a GTIN first!");
+            return;
+        }
+
+        fetch(`https://world.openfoodfacts.org/api/v0/product/${gtin}.json`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 1) { // Product found
+                const product = data.product;
+
+                // Autofill Name
+                if (product.product_name) {
+                    document.getElementById("name").value = product.product_name;
+                }
+
+                // Extract Size (Value & Unit)
+                if (product.quantity) {
+                    const match = product.quantity.match(/([\d,.]+)\s*([a-zA-Z]*)/);
+                    if (match) {
+                        document.getElementById("size_value").value = parseFloat(match[1].replace(",", "."));
+                        document.getElementById("size_unit").value = match[2].toLowerCase(); // Standardize unit
+                    }
+                }
+
+                // Extract Allergens
+                if (product.allergens_tags && product.allergens_tags.length > 0) {
+                    document.getElementById("allergenes").value = product.allergens_tags.map(tag => tag.replace("en:", "")).join(", ");
+                }
+
+                // Extract Synonyms
+                if (product.generic_name) {
+                    document.getElementById("synonyms").value = product.generic_name;
+                }
+
+                // Extract Nutritional Values (per 100g)
+                if (product.nutriments) {
+                    const nutriments = product.nutriments;
+
+                    if ("energy-kcal_100g" in nutriments) {
+                        document.getElementById("energy").value = nutriments["energy-kcal_100g"];
+                    }
+
+                    if ("fat_100g" in nutriments) {
+                        document.getElementById("fats_total").value = nutriments["fat_100g"];
+                    }
+
+                    if ("saturated-fat_100g" in nutriments) {
+                        document.getElementById("fats_saturated").value = nutriments["saturated-fat_100g"];
+                    }
+
+                    if ("carbohydrates_100g" in nutriments) {
+                        document.getElementById("carbohydrates_total").value = nutriments["carbohydrates_100g"];
+                    }
+
+                    if ("sugars_100g" in nutriments) {
+                        document.getElementById("sugar").value = nutriments["sugars_100g"];
+                    }
+
+                    if ("proteins_100g" in nutriments) {
+                        document.getElementById("proteins").value = nutriments["proteins_100g"];
+                    }
+
+                    if ("fiber_100g" in nutriments) {
+                        document.getElementById("fiber").value = nutriments["fiber_100g"];
+                    }
+
+                    if ("salt_100g" in nutriments) {
+                        document.getElementById("salt").value = nutriments["salt_100g"];
+                    }
+                }
+
+                // Extract and Display Product Image
+                let imageUrl = product.image_url || product.image_front_url || product.image_small_url;
+                if (imageUrl) {
+                    displayProductImage(imageUrl);
+                } else {
+                    clearProductImage();
+                }
+
+                alert("GTIN data retrieved successfully!");
+            } else {
+                alert("No product found for this GTIN.");
+            }
+        })
+        .catch(error => {
+            console.error("GTIN Lookup Error:", error);
+            alert("Failed to fetch GTIN data. Try again later.");
+        });
+    }
+
+    // Function to Display Product Image
+    function displayProductImage(url) {
+        let imageContainer = document.getElementById("product-image-container");
+        if (!imageContainer) {
+            // Create a new image container if it doesn’t exist
+            imageContainer = document.createElement("div");
+            imageContainer.id = "product-image-container";
+            imageContainer.style.textAlign = "center";
+            document.querySelector("form").insertBefore(imageContainer, document.querySelector("form").firstChild);
+        }
+
+        imageContainer.innerHTML = `<img src="${url}" alt="Product Image" style="max-width: 150px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">`;
+    }
+
+    // Function to Remove Product Image if None is Found
+    function clearProductImage() {
+        let imageContainer = document.getElementById("product-image-container");
+        if (imageContainer) {
+            imageContainer.innerHTML = "";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Select the GTIN input field
+        const gtinInput = document.getElementById("gtin");
+
+        // Listen for "Enter" key press inside GTIN input
+        gtinInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent form submission or page refresh
+                fetchGTINData(); // Call GTIN lookup function
+            }
+        });
+
+        // Select all number inputs and replace "," with "." on blur
+        const numericInputs = document.querySelectorAll("input[type='number']");
+        numericInputs.forEach(input => {
+            input.addEventListener("blur", function () {
+                this.value = this.value.replace(",", "."); // Replace comma with dot
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/ingredients")  // Fetch all ingredients from Flask API
+        .then(response => response.json())
+        .then(data => {
+            let locations = new Set();
+            let categories = new Set();
+            let sources = new Set();
+
+            // Extract unique locations, categories, and sources
+            data.forEach(ingredient => {
+                if (ingredient.location && ingredient.location.place) locations.add(ingredient.location.place);
+                if (ingredient.category) categories.add(ingredient.category);
+                if (ingredient.source) sources.add(ingredient.source);
+            });
+
+            // Populate dropdowns
+            populateDropdown("location", locations);
+            populateDropdown("category", categories);
+            populateDropdown("source", sources);
+        })
+        .catch(error => console.error("Error fetching ingredient data:", error));
+    });
+
+    function populateDropdown(elementId, values) {
+        let select = document.getElementById(elementId);
+        values.forEach(value => {
+            let option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+
+        // Add "Add New" option
+        let newOption = document.createElement("option");
+        newOption.value = "add_new";
+        newOption.textContent = "➕ Add New";
+        select.appendChild(newOption);
+    }
+
+    function checkNewEntry(field) {
+        let select = document.getElementById(field);
+        let newInput = document.getElementById("new_" + field);
+
+        if (select.value === "add_new") {
+            newInput.style.display = "block";  // Show input field for new entry
+            newInput.focus();
+        } else {
+            newInput.style.display = "none";  // Hide input if existing option is selected
+        }
+    }
+
+    async function submitIngredient() {
+        try {
+            const generatedID = await updateID();
+            console.log("Generated ID:", generatedID); // Debugging: Log the generated ID
+
+            function getDropdownValue(selectId, inputId) {
+                let select = document.getElementById(selectId);
+                let input = document.getElementById(inputId);
+                return select.value === "add_new" ? input.value.trim() : select.value.trim();
+            }
+
+            const ingredientData = {
+                id: generatedID, // Ensure ID is correct
+                name: document.getElementById("name").value.trim(),
+                gtin: document.getElementById("gtin").value.trim(),
+                best_before_date: document.getElementById("best_before_date").value,
+                location: {
+                    place: getDropdownValue("location", "new_location"),
+                    shelf: document.getElementById("shelf").value ? parseInt(document.getElementById("shelf").value) : null
+                },
+                category: getDropdownValue("category", "new_category"),
+                source: getDropdownValue("source", "new_source"),
+                vegan_level: parseInt(document.getElementById("vegan_level").value),
+                diet_level: parseInt(document.getElementById("diet_level").value),
+                price: document.getElementById("price").value ? parseFloat(document.getElementById("price").value) : null,
+                size: {
+                    value: document.getElementById("size_value").value ? parseFloat(document.getElementById("size_value").value) : null,
+                    unit: document.getElementById("size_unit").value
+                },
+                nutritional_values: {
+                    energy: document.getElementById("energy").value ? parseFloat(document.getElementById("energy").value) : null,
+                    fats: {
+                        total: document.getElementById("fats_total").value ? parseFloat(document.getElementById("fats_total").value) : null,
+                        saturated: document.getElementById("fats_saturated").value ? parseFloat(document.getElementById("fats_saturated").value) : null
+                    },
+                    carbohydrates: {
+                        total: document.getElementById("carbohydrates_total").value ? parseFloat(document.getElementById("carbohydrates_total").value) : null,
+                        sugar: document.getElementById("sugar").value ? parseFloat(document.getElementById("sugar").value) : null
+                    },
+                    proteins: document.getElementById("proteins").value ? parseFloat(document.getElementById("proteins").value) : null,
+                    fiber: document.getElementById("fiber").value ? parseFloat(document.getElementById("fiber").value) : null,
+                    salt: document.getElementById("salt").value ? parseFloat(document.getElementById("salt").value) : null
+                },
+                storage_conditions: document.getElementById("storage_conditions").value.split(",").map(item => item.trim()).filter(Boolean),
+                allergenes: document.getElementById("allergenes").value.split(",").map(item => item.trim()).filter(Boolean),
+                personal_distaste: document.getElementById("personal_distaste").value.split(",").map(item => item.trim()).filter(Boolean),
+                synonyms: document.getElementById("synonyms").value.split(",").map(item => item.trim()).filter(Boolean),
+                comment: document.getElementById("comment").value.trim()
+            };
+
+            console.log("Submitting Ingredient Data:", JSON.stringify(ingredientData, null, 2)); // Debugging: Log data before sending
+
+            // Validate required fields
+            if (!ingredientData.name || !ingredientData.location.place) {
+                alert("Name and Storage Location are required!");
+                return;
+            }
+
+            // Send data to Flask API via POST request
+            const response = await fetch("/ingredients", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(ingredientData)
+            });
+
+            const responseText = await response.text();
+            console.log("Raw Server Response:", responseText);
+
+            try {
+                const responseData = JSON.parse(responseText);
+                console.log("Parsed JSON Response:", responseData);
+
+                if (!response.ok) {
+                    alert(`Error: ${responseData.error || "Unknown error occurred"}`);
+                } else {
+                    alert("Ingredient added successfully!");
+                    document.getElementById("ingredient-form").reset();
+
+                    // **Hide the "Add New" fields**
+                    document.getElementById("new_location").style.display = "none";
+                    document.getElementById("new_category").style.display = "none";
+                    document.getElementById("new_source").style.display = "none";
+
+                    // **Reload dropdown options from the database**
+                    fetchDropdownOptions();
+                }
+            } catch (error) {
+                console.error("Error parsing JSON response:", error);
+                alert("Failed to parse server response. Check console for details.");
+            }
+        } catch (error) {
+            console.error("Upload Error:", error);
+            alert("Failed to upload ingredient. Check console for details.");
+        }
+    }
+
+
 </script>
 
 </body>

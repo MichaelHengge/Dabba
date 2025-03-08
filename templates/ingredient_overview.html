@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ingredient.name }} - Details</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gloock&family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f1e4;
+            color: #5a3e1b;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .title-container {
+            background: white;
+            padding: 15px;
+            z-index: 1000;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Ensures the title stays centered */
+            gap: 15px;
+            position: relative; /* Needed for absolute positioning */
+        }
+
+        .title-container h1 {
+            flex-grow: 1; /* Allows the title to remain centered */
+            text-align: center;
+        }
+
+        .title-container img {
+            height: 50px;
+            width: auto;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none; /* Hidden until an image is available */
+            transition: transform 0.2s ease-in-out;
+            position: absolute;
+            right: 15px; /* Aligns image to the right corner */
+        }
+
+        .title-container img:hover {
+            transform: scale(1.1);
+        }
+        h1 {
+            color: #8c4600;
+            margin-bottom: 5px;
+            flex-grow: 1;
+        }
+        .section {
+            margin-top: 20px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .back-link {
+            text-decoration: none;
+            color: #8c4600;
+            font-size: 16px;
+            display: block;
+            text-align: left; /* Align to the left */
+            margin-left: 20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .breadcrumb {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .breadcrumb a {
+            text-decoration: none;
+            color: #8c4600;
+            font-weight: bold;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+            color: #ff9800;
+        }
+        .breadcrumb span {
+            font-weight: bold;
+            color: #5a3e1b;
+        }
+        /* Popup Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+        }
+        .modal img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 10px;
+        }
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: white;
+            background: #ff9800; /* Orange background */
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%; /* Circle shape */
+            font-weight: bold;
+        }
+
+        .close:hover {
+            background: #e68900; /* Darker orange on hover */
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const ingredientID = "{{ ingredient.id }}";
+            const imageThumbnail = document.getElementById("thumbnail");
+            const modalImage = document.getElementById("modal-image");
+            const modal = document.getElementById("image-modal");
+
+            if (/^\d+$/.test(ingredientID)) {
+                fetch(`https://world.openfoodfacts.org/api/v0/product/${ingredientID}.json`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 1 && data.product.image_url) {
+                        imageThumbnail.src = data.product.image_url;
+                        imageThumbnail.style.display = "block"; // Show the thumbnail
+                        modalImage.src = data.product.image_url; // Set the modal image
+                    }
+                })
+                .catch(error => console.error("Failed to fetch GTIN image:", error));
+            }
+        });
+
+        function openModal() {
+            document.getElementById("image-modal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("image-modal").style.display = "none";
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="breadcrumb">
+        <a href="/">🏠 Home</a> ›
+        <a href="/ingredient-list">Ingredients</a> ›
+        <span>{{ ingredient.name }}</span>
+    </nav>
+
+<div class="container">
+    <div class="title-container">
+        <h1>{{ ingredient.name }}</h1>
+        <img id="thumbnail" onclick="openModal()" alt="Product Image">
+    </div>
+
+    <div class="section">
+        <h3>Basic Information</h3>
+        <p><strong>ID:</strong> {{ ingredient.id }}</p>
+        <p><strong>Category:</strong> {{ ingredient.category }}</p>
+        <p><strong>Source:</strong> {{ ingredient.source }}</p>
+        <p><strong>Best Before:</strong> {{ ingredient.best_before_date or "N/A" }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Storage</h3>
+        <p><strong>Location:</strong> {{ ingredient.location.place }}</p>
+        <p><strong>Shelf:</strong> {{ ingredient.location.shelf or "N/A" }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Size & Measurement</h3>
+        <p><strong>Amount:</strong> {{ ingredient.size.value }} {{ ingredient.size.unit }}</p>
+        <p><strong>Price:</strong> €{{ ingredient.price or "N/A" }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Additional Information</h3>
+        <p><strong>Allergens:</strong> {{ ", ".join(ingredient.allergenes) if ingredient.allergenes else "None" }}</p>
+        <p><strong>Synonyms:</strong> {{ ", ".join(ingredient.synonyms) if ingredient.synonyms else "None" }}</p>
+        <p><strong>Comment:</strong> {{ ingredient.comment or "None" }}</p>
+    </div>
+
+    <br>
+    <a href="/ingredient-list" class="back-link">⬅ Back to Ingredient List</a>
+</div>
+
+<div class="footer">
+    &copy; 2025 Michael Hengge | Inspired by the Indian spice box.
+</div>
+
+<!-- Image Modal -->
+<div id="image-modal" class="modal" onclick="closeModal()">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img id="modal-image" alt="Full-size Product Image">
+    </div>
+</div>
+
+</body>
+</html>
